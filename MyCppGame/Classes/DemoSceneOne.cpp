@@ -1,6 +1,33 @@
 #include "DemoSceneOne.h"
 
 
+#pragma mark--------poker type----
+
+
+
+#define POKER_TYPE_SINGLE              1
+#define POKER_TYPE_DOUBLE              2      
+#define POKER_TYPE_THREE               3    
+
+#define POKER_TYPE_FOUR                31 
+
+#define POKER_TYPE_FIVE_THREE_WITH_TWO 32   
+#define POKER_TYPE_FIVE_FOUR_WITH_ONE  41   
+#define POKER_TYPE_SIX_FOUR_WITH_TWO   42 
+
+#define POKER_TYPE_EIGHT_ONE           3311 
+#define POKER_TYPE_EIGHT_TWO           1331
+#define POKER_TYPE_EIGHT_THREE         1133
+
+#define POKER_TYPE_TEN                 3322   
+
+#define POKER_TYPE_STRAIGHT            12345   
+#define POKER_TYPE_DOUBLE_STRAIGHT     112233
+#define POKER_TYPE_THREE_STRAIGHT      111222 
+#define POKER_COMMON_BOOM              1000   
+#define POKER_MAX_BOOM                 2000 
+
+
 Scene* DemoSceneOne::createScene()
 {
 	return DemoSceneOne::create();
@@ -301,11 +328,11 @@ void DemoSceneOne::passThisRecycle(Ref* pSender)
 
 }
 
-bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
+int DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 {
 	if (SelectValueDic->count()==1)
 	{
-		return true;
+		return POKER_TYPE_SINGLE;
 	}
 	if (SelectValueDic->count() == 2)
 	{
@@ -317,13 +344,8 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 		//log("keys->getObjectAtIndex(0)====%d,,,keys->getObjectAtIndex(1)===%d", value->getValue(), keys->getObjectAtIndex(1)->getValue());
 		if (((cocos2d::Integer *)(keys->getObjectAtIndex(0)))->getValue()/4 == ((cocos2d::Integer *)(keys->getObjectAtIndex(1)))->getValue() / 4)
 		{
-			log("true");
-			return true;
-		}
-		else
-		{
-			log("notrue");
-			return false;
+			log("POKER_TYPE_DOUBLE");
+			return POKER_TYPE_DOUBLE;
 		}
 	}
 	if (SelectValueDic->count() == 3)//////111
@@ -332,12 +354,7 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 		if (((cocos2d::Integer *)(keys->getObjectAtIndex(0)))->getValue() / 4 == ((cocos2d::Integer *)(keys->getObjectAtIndex(1)))->getValue() / 4&& ((cocos2d::Integer *)(keys->getObjectAtIndex(1)))->getValue() / 4== ((cocos2d::Integer *)(keys->getObjectAtIndex(2)))->getValue() / 4)
 		{
 			log("111 true");
-			return true;
-		}
-		else
-		{
-			log("no true");
-			return false;
+			return POKER_TYPE_THREE;
 		}
 	}
 	if (SelectValueDic->count()==4)///////1111 1112
@@ -349,7 +366,7 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 			((cocos2d::Integer *)(keys->getObjectAtIndex(2)))->getValue() / 4 == ((cocos2d::Integer *)(keys->getObjectAtIndex(3)))->getValue() / 4)
 		{
 			log("1111 true");
-			return true;
+			return POKER_COMMON_BOOM;
 		}
 		for (int i = 0; i < keys->count()-2; i++)
 		{
@@ -361,12 +378,7 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 						((cocos2d::Integer *)(keys->getObjectAtIndex(j)))->getValue() / 4 == ((cocos2d::Integer *)(keys->getObjectAtIndex(k)))->getValue() / 4)
 					{
 						log("1112 true");
-						return true;
-					}
-					else
-					{
-						log("notrue");
-						return false;
+						return POKER_TYPE_FOUR;
 					}
 				}
 			}
@@ -395,12 +407,46 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 
 			}
 		}
-		if (keyNum[0] == keyNum[1] &&
-			keyNum[1] == keyNum[2] &&
-			keyNum[3] == keyNum[4])
+		bool pukerNode3 = false;
+		bool pukerNode2 = false;
+		for (int i = 0; i < SelectValueDic->count(); i++)
+		{
+			int pukerNum = 0;
+			for (int j = 0; j < SelectValueDic->count(); j++)
+			{
+				if (keyNum[i]==keyNum[j])
+				{
+					pukerNum++;
+				}
+			}
+			if (pukerNum == 3)
+			{
+				pukerNode3 = true;
+				break;
+			}
+		}
+
+		for (int i = 0; i < SelectValueDic->count(); i++)
+		{
+			int pukerNum = 0;
+			for (int j = 0; j < SelectValueDic->count(); j++)
+			{
+				if (keyNum[i] == keyNum[j])
+				{
+					pukerNum++;
+				}
+			}
+			if (pukerNum == 2)
+			{
+				pukerNode2 = true;
+				break;
+			}
+		}
+
+		if (pukerNode2&&pukerNode3)
 		{
 			log("11122 true");
-			return true;
+			return POKER_TYPE_FIVE_THREE_WITH_TWO;
 		}
 
 		auto keysCopy = Array::createWithArray(keys);
@@ -434,52 +480,23 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 		
 		if (keysInt[0]+1== keysInt[1]&& keysInt[1]+1 == keysInt[2] && keysInt[2]+1 == keysInt[3]&& keysInt[3]+1== keysInt[4])
 		{
-			log("12345 true");
-			return true;
-		}
-		else
-		{
-			log("5 notrue");
-			return false;
+			log("12345 POKER_TYPE_STRAIGHT");
+			return POKER_TYPE_STRAIGHT;
 		}
 	}
 	if (SelectValueDic->count() == 6)///////111123  123456 112233 111222
 	{
 		Array *keys = SelectValueDic->allKeys();
 		int keyFourNum = 0;
-		for (int i = 0; i < SelectValueDic->count() - 1; i++)
+		int keyNum[6];
+		for (int i = 0; i < SelectValueDic->count(); i++)
 		{
 			int key = ((cocos2d::Integer *)(keys->getObjectAtIndex(i)))->getValue() / 4;
-			int keyRecord = 0;
-			for (int j = i + 1; j < SelectValueDic->count(); j++)
-			{
-				if (key == ((cocos2d::Integer *)(keys->getObjectAtIndex(j)))->getValue() / 4)
-				{
-					keyRecord++;
-				}
-			}
-			if (keyRecord == 3)
-			{
-				keyFourNum = 1;
-			}
+			keyNum[i] = key;
 		}
-
-		if (keyFourNum == 1)
-		{
-			log("111122 true");
-			return true;
-		}
-
-		int keyTwoNum1 = 0;
-		int keyTwoNum2 = 0;
-		int keyTwoNum3 = 0;
-		int keyNum[6];
-		bool pukerIsUnder12 = true;
-		
-		
 		for (int i = 0; i < SelectValueDic->count() - 1; i++)
 		{
-			for (int j = i+1; j < SelectValueDic->count(); j++)
+			for (int j = i + 1; j < SelectValueDic->count(); j++)
 			{
 				if (keyNum[i] > keyNum[j])
 				{
@@ -490,6 +507,38 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 
 			}
 		}
+		
+		int pukerNode = false;
+
+		for (int i = 0; i < SelectValueDic->count(); i++)
+		{
+			int pukerNum = 0;
+			for (int j = 0; j < SelectValueDic->count(); j++)
+			{
+				if (keyNum[i] == keyNum[j])
+				{
+					pukerNum++;
+				}
+			}
+			if (pukerNum==4)
+			{
+				pukerNode = true;
+				break;
+			}
+		}
+
+
+		if (pukerNode)
+		{
+			log("111122 true");
+			return POKER_TYPE_SIX_FOUR_WITH_TWO;
+		}
+
+		int keyTwoNum1 = 0;
+		int keyTwoNum2 = 0;
+		int keyTwoNum3 = 0;
+		
+		bool pukerIsUnder12 = true;
 
 		for (int i = 0; i < SelectValueDic->count(); i++)
 		{
@@ -515,7 +564,7 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 				keyNum[4] == keyNum[5])
 			{
 				log("112233 true");
-				return true;
+				return POKER_TYPE_DOUBLE_STRAIGHT;
 			}
 			if (keyNum[0] == keyNum[1] &&
 				keyNum[1] == keyNum[2] &&
@@ -524,16 +573,7 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 				keyNum[4] == keyNum[5])
 			{
 				log("111222 true");
-				return true;
-			}
-			if (keyNum[0] == keyNum[1] &&
-				keyNum[1] == keyNum[2] &&
-				keyNum[2] + 1 == keyNum[3] &&
-				keyNum[3] == keyNum[4] &&
-				keyNum[4] == keyNum[5])
-			{
-				log("111222 true");
-				return true;
+				return POKER_TYPE_THREE_STRAIGHT;
 			}
 		}
 	}
@@ -578,12 +618,12 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 			keyNum[5] + 1 == keyNum[6])
 		{
 			log("1234567 true");
-			return true;
+			return POKER_TYPE_STRAIGHT;
 		}
 		else
 		{
 			log("1234567 flase");
-			return false;
+			return 0;
 		}
 	}
 	if (SelectValueDic->count() == 8) ///12345678  12223334 11223344 
@@ -633,7 +673,7 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 				keyNum[6] + 1 == keyNum[7])
 			{
 				log("12345678 true");
-				return true;
+				return POKER_TYPE_STRAIGHT;
 			}
 			if (keyNum[0] == keyNum[1] &&
 				keyNum[1] + 1 == keyNum[2] &&
@@ -644,7 +684,7 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 				keyNum[6] == keyNum[7])
 			{
 				log("11223344 true");
-				return true;
+				return POKER_TYPE_DOUBLE_STRAIGHT;
 			}
 		}
 		int numRecode = 0;
@@ -671,16 +711,16 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 				if (keyNum[i] == keyNum[i + 1] && keyNum[i] == keyNum[i + 2] && keyNum[i] == keyNum[i + 3] && keyNum[i] + 1 == keyNum[i + 4])
 				{
 					log("12223334 true");
-					return true;
+					return POKER_TYPE_FOUR;
 				}
 			}
 			log("12223334 false");
-			return false;
+			return 0;
 		}
 		else
 		{
 			log("12223334 false");
-			return false;
+			return 0;
 		}
 
 	}
@@ -700,7 +740,7 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 			if (key >= 12)
 			{
 				log("123456789 include 2222 wang flase");
-				return false;
+				return 0;
 			}
 
 		}
@@ -728,7 +768,7 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 			keyNum[7] + 1 == keyNum[8])
 		{
 			log("123456789 true");
-			return true;
+			return POKER_TYPE_STRAIGHT;
 		}
 
 		if (keyNum[0] == keyNum[1] &&
@@ -740,8 +780,8 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 			keyNum[6] == keyNum[7] &&
 			keyNum[7] == keyNum[8])
 		{
-			log("123456789 true");
-			return true;
+			log("111222333 true");
+			return POKER_TYPE_THREE_STRAIGHT;
 		}
 		log("123456789 false");
 		return false;
@@ -794,7 +834,7 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 				keyNum[8] + 1 == keyNum[9])
 			{
 				log("12345678910 true");
-				return true;
+				return POKER_TYPE_STRAIGHT;
 			}
 			if (keyNum[0] == keyNum[1] &&
 				keyNum[1] + 1 == keyNum[2] &&
@@ -807,7 +847,7 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 				keyNum[8] == keyNum[9])
 			{
 				log("1122334455 true");
-				return true;
+				return POKER_TYPE_DOUBLE_STRAIGHT;
 			}
 		}
 		
@@ -845,16 +885,16 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 				if (keyNum[i] == keyNum[i + 1] && keyNum[i] == keyNum[i + 2] && keyNum[i] == keyNum[i + 3] && keyNum[i] + 1 == keyNum[i + 4])
 				{
 					log("12223334 true");
-					return true;
+					return POKER_TYPE_FIVE_THREE_WITH_TWO;
 				}
 			}
 			log("12223334 false");
-			return false;
+			return 0;
 		}
 		else
 		{
 			log("12223334 false");
-			return false;
+			return 0;
 		}
 
 	}
@@ -908,11 +948,11 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 				keyNum[10] + 1 == keyNum[11])
 			{
 				log("12345678910j true");
-				return true;
+				return POKER_TYPE_STRAIGHT;
 			}
 		}
 		log("12345678910j false");
-		return false;
+		return 0;
 		
 	}
 	if (SelectValueDic->count() == 12) ///112233445566 111222333444 111222333456
@@ -963,7 +1003,7 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 				keyNum[10] == keyNum[11])
 			{
 				log("112233445566 true");
-				return true;
+				return POKER_TYPE_DOUBLE_STRAIGHT;
 			}
 			if (keyNum[0] == keyNum[1] &&
 				keyNum[1] == keyNum[2] &&
@@ -978,7 +1018,7 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 				keyNum[10]== keyNum[11] )
 			{
 				log("111222333444 true");
-				return true;
+				return POKER_TYPE_THREE_STRAIGHT;
 			}
 		}
 		
@@ -994,7 +1034,7 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 		if (numCode=3)
 		{
 			log("111222333456 true");
-			return true;
+			return POKER_TYPE_FOUR;
 		}
 		log("111222333456 false");
 		return false;
@@ -1007,7 +1047,7 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 	if (SelectValueDic->count() == 14)///11223344556677
 	{
 		Array *keys = SelectValueDic->allKeys();
-		int keyNum[12];
+		int keyNum[14];
 		bool pukerIsUnder12 = true;
 		for (int i = 0; i < SelectValueDic->count(); i++)
 		{
@@ -1054,7 +1094,7 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 				keyNum[12] == keyNum[13])
 			{
 				log("11223344556677 true");
-				return true;
+				return POKER_TYPE_DOUBLE_STRAIGHT;
 			}
 		}
 	}
@@ -1063,7 +1103,8 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 		Array *keys = SelectValueDic->allKeys();
 		int keyNum[15];
 		bool pukerIsUnder12 = true;
-		int pukerCode = 0;
+		int pukerCode3 = 0;
+		int pukerCode2 = 0;
 		for (int i = 0; i < SelectValueDic->count(); i++)
 		{
 			int key = ((cocos2d::Integer *)(keys->getObjectAtIndex(i)))->getValue() / 4;
@@ -1086,56 +1127,37 @@ bool DemoSceneOne::gameRules(Dictionary *SelectValueDic)
 		{
 			if (keyNum[i] == keyNum[i+1]&& keyNum[i]== keyNum[i + 2]&& keyNum[i]+1 == keyNum[i+3] && keyNum[i] < 12)
 			{
-				pukerCode++;
+				pukerCode3++;
 			}
 		}
-		for (int i = 0; i < SelectValueDic->count() - 3; i++)
+
+		for (size_t i = 0; i < SelectValueDic->count(); i++)
 		{
-			if (keyNum[i] == keyNum[i + 1] && keyNum[i] == keyNum[i + 2] && keyNum[i] + 1 == keyNum[i + 3])
+			int pukerCode = 0;
+			for (size_t j = 0; j < SelectValueDic->count(); j++)
 			{
-				pukerCode++;
+				if (keyNum[i] == keyNum[j])
+				{
+					pukerCode++;
+				}
 			}
-		}
-
-
-		if (pukerCode==3)
-		{
+			if (pukerCode== 2)
+			{
+				pukerCode2++;
+			}
 
 		}
 		
-
-
-		for (int i = 0; i < SelectValueDic->count(); i++)
+		if (pukerCode3 ==3&& pukerCode2==3)
 		{
-			int key = keyNum[i];
-			if (key >= 12)
-			{
-				log("1234567 include 2222 wang flase");
-				pukerIsUnder12 = false;
-			}
-
+			log("111222333445566 true");
+			return POKER_TYPE_FIVE_THREE_WITH_TWO;
 		}
-		if (pukerIsUnder12)
-		{
-			if (keyNum[0] == keyNum[1] &&
-				keyNum[1] + 1 == keyNum[2] &&
-				keyNum[2] == keyNum[3] &&
-				keyNum[3] + 1 == keyNum[4] &&
-				keyNum[4] == keyNum[5] &&
-				keyNum[5] + 1 == keyNum[6] &&
-				keyNum[6] == keyNum[7] &&
-				keyNum[7] + 1 == keyNum[8] &&
-				keyNum[8] == keyNum[9] &&
-				keyNum[9] + 1 == keyNum[10] &&
-				keyNum[10] == keyNum[11] &&
-				keyNum[11] + 1 == keyNum[12] &&
-				keyNum[12] == keyNum[13])
-			{
-				log("11223344556677 true");
-				return true;
-			}
-		}
+		log("111222333445566 false");
+		return false;
 	}
+	log("false");
+	return false;
 }
 
 

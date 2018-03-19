@@ -22,7 +22,7 @@ public:
 	void sendPokerOutEveryPlayer();
 	void displayPuker();
 	void orderPukerComparison(Vector <Puker *> &vector);
-	bool gameRules(Dictionary *SelectValueDic);
+	int gameRules(Dictionary *SelectValueDic);
 
 	char* FontToUTF8(const char* font);
 
